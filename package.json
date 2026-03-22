@@ -1,0 +1,21 @@
+{
+  "name": "taxwise",
+  "version": "1.0.0",
+  "description": "TaxWise — IA tributária para profissionais autônomos",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "ingest": "node scripts/ingest.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "groq-sdk": "^1.1.1"
+  }
+}

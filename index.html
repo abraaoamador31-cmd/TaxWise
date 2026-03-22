@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaxWise — Brazilian Tax Planning AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14; --surface: #13161e; --border: #252a38;
+    --accent: #00e5a0; --accent2: #0066ff; --warn: #ffb800;
+    --text: #e8eaf0; --muted: #6b7280; --pro: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(0,229,160,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 10% 90%, rgba(0,102,255,0.06) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px; border-bottom: 1px solid var(--border);
+    background: rgba(13,15,20,0.92); backdrop-filter: blur(12px); flex-shrink: 0;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .logo-name { font-family: 'DM Serif Display', serif; font-size: 20px; letter-spacing: -0.5px; }
+  .logo-name span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+
+  /* ── USAGE BAR ── */
+  #usage-bar {
+    position: relative; z-index: 10;
+    padding: 8px 24px; border-bottom: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  .usage-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .usage-track {
+    flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden;
+  }
+  .usage-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease, background 0.3s;
+  }
+  .usage-fill.danger { background: linear-gradient(90deg, #ff6b6b, #ff4444); }
+  .usage-count { font-family: 'DM Mono', monospace; font-size: 11px; white-space: nowrap; }
+  .usage-count.ok { color: var(--accent); }
+  .usage-count.warn { color: var(--warn); }
+  .usage-count.danger { color: #ff6b6b; }
+  .usage-count.pro { color: var(--pro); }
+
+  .upgrade-btn-small {
+    font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 12px;
+    border-radius: 20px; border: 1px solid rgba(245,158,11,0.4);
+    background: rgba(245,158,11,0.1); color: var(--pro);
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .upgrade-btn-small:hover { background: rgba(245,158,11,0.2); }
+  .upgrade-btn-small.hidden { display: none; }
+
+  /* ── LANG TOGGLE ── */
+  .lang-toggle {
+    display: flex; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 3px; gap: 2px;
+  }
+  .lang-btn {
+    padding: 3px 10px; border-radius: 16px; border: none;
+    background: transparent; color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 11px; cursor: pointer; transition: all 0.2s;
+  }
+  .lang-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; font-weight: 600; }
+
+  /* ── PLAN BADGE ── */
+  .plan-badge {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 4px 10px; border-radius: 20px; border: 1px solid;
+  }
+  .plan-badge.free { color: var(--muted); border-color: var(--border); background: transparent; }
+  .plan-badge.pro { color: var(--pro); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+
+  /* ── TOPICS ── */
+  #topics {
+    position: relative; z-index: 10;
+    display: flex; gap: 8px; padding: 8px 24px;
+    border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; scrollbar-width: none;
+  }
+  #topics::-webkit-scrollbar { display: none; }
+  .topic-btn {
+    white-space: nowrap; font-size: 12px; font-family: 'DM Mono', monospace;
+    padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s;
+  }
+  .topic-btn:hover, .topic-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.07); }
+  .topic-btn.locked { opacity: 0.45; cursor: default; }
+  .topic-btn.locked:hover { border-color: var(--border); color: var(--muted); background: transparent; }
+
+  /* ── CHAT ── */
+  #chat {
+    flex: 1; overflow-y: auto; padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 18px;
+    position: relative; z-index: 1;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  #welcome {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1; text-align: center; gap: 14px; padding: 40px;
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .welcome-title { font-family: 'DM Serif Display', serif; font-size: 28px; letter-spacing: -1px; line-height: 1.1; }
+  .welcome-title em { font-style: italic; color: var(--accent); }
+  .welcome-sub { color: var(--muted); font-size: 14px; max-width: 380px; line-height: 1.6; }
+  .quick-questions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 560px; }
+  .quick-q {
+    font-size: 13px; padding: 7px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); cursor: pointer; transition: all 0.2s;
+  }
+  .quick-q:hover { border-color: var(--accent); background: rgba(0,229,160,0.06); transform: translateY(-1px); }
+
+  /* ── MESSAGES ── */
+  .msg { display: flex; gap: 12px; animation: fadeUp 0.3s ease both; max-width: 840px; width: 100%; margin: 0 auto; }
+  .msg.user { flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; margin-top: 2px;
+  }
+  .msg.user .msg-avatar { background: #1a2540; border: 1px solid var(--border); }
+  .msg.ai .msg-avatar { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  .msg-content { max-width: calc(100% - 46px); }
+  .msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.75; }
+  .msg.user .msg-bubble { background: #1a2540; border: 1px solid var(--border); border-top-right-radius: 4px; }
+  .msg.ai .msg-bubble { background: #131a16; border: 1px solid rgba(0,229,160,0.15); border-top-left-radius: 4px; }
+  .msg-bubble strong { color: var(--accent); font-weight: 600; }
+  .msg-bubble ul { padding-left: 18px; margin: 6px 0; }
+  .msg-bubble li { margin: 3px 0; }
+  .msg-bubble h3 { font-family: 'DM Serif Display', serif; font-size: 16px; margin: 10px 0 5px; color: var(--accent); }
+  .msg-bubble p { margin: 6px 0; }
+  .rag-sources {
+    margin-top: 8px; padding: 7px 11px;
+    background: rgba(0,102,255,0.05); border: 1px solid rgba(0,102,255,0.15);
+    border-radius: 8px; font-size: 11px; font-family: 'DM Mono', monospace; color: #7aa3ff;
+  }
+  .rag-sources .sources-title { color: var(--muted); margin-bottom: 3px; }
+  .source-tag {
+    display: inline-block; padding: 2px 7px; border-radius: 10px;
+    background: rgba(0,102,255,0.1); border: 1px solid rgba(0,102,255,0.2);
+    margin: 2px 2px 2px 0; font-size: 10px;
+  }
+  .msg-meta { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .msg.user .msg-meta { text-align: right; }
+
+  /* TYPING */
+  .typing-dots {
+    display: flex; gap: 5px; padding: 12px 16px;
+    background: #131a16; border: 1px solid rgba(0,229,160,0.15);
+    border-radius: 16px; border-top-left-radius: 4px; width: fit-content;
+  }
+  .typing-dots span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); animation: bounce 1.2s infinite; opacity: 0.5;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* ── INPUT ── */
+  #input-area {
+    position: relative; z-index: 10; padding: 12px 24px;
+    border-top: 1px solid var(--border); background: rgba(13,15,20,0.95);
+    backdrop-filter: blur(12px); flex-shrink: 0;
+  }
+  .disclaimer {
+    background: rgba(255,184,0,0.06); border: 1px solid rgba(255,184,0,0.2);
+    border-radius: 8px; padding: 7px 12px; font-size: 11px; color: var(--warn);
+    font-family: 'DM Mono', monospace; max-width: 840px; margin: 0 auto 10px;
+  }
+  .input-wrapper {
+    display: flex; gap: 10px; align-items: flex-end; max-width: 840px; margin: 0 auto;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 8px 8px 8px 14px; transition: border-color 0.2s;
+  }
+  .input-wrapper:focus-within { border-color: rgba(0,229,160,0.4); }
+  #user-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: 'Outfit', sans-serif; font-size: 14px;
+    resize: none; max-height: 130px; line-height: 1.5; padding: 3px 0;
+  }
+  #user-input::placeholder { color: var(--muted); }
+  #send-btn {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), #00c87a);
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+  }
+  #send-btn:hover { transform: scale(1.05); }
+  #send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  #send-btn svg { fill: #000; }
+  .input-hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 5px; font-family: 'DM Mono', monospace; }
+
+  /* ── PAYWALL MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: #13161e; border: 1px solid var(--border); border-radius: 20px;
+    padding: 36px 32px; max-width: 440px; width: 100%; text-align: center;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 0 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,229,160,0.08);
+  }
+  @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-icon { font-size: 48px; margin-bottom: 12px; }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .modal-title em { font-style: italic; color: var(--accent); }
+  .modal-sub { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+
+  .plans {
+    display: flex; gap: 10px; margin-bottom: 20px;
+  }
+  .plan-card {
+    flex: 1; border: 2px solid var(--border); border-radius: 14px;
+    padding: 16px 12px; cursor: pointer; transition: all 0.2s; position: relative;
+    background: transparent; color: var(--text); font-family: 'Outfit', sans-serif;
+  }
+  .plan-card:hover { border-color: rgba(245,158,11,0.5); }
+  .plan-card.selected { border-color: var(--pro); background: rgba(245,158,11,0.06); }
+  .plan-card .plan-name { font-size: 13px; color: var(--muted); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .plan-card .plan-price { font-size: 22px; font-weight: 600; color: var(--text); }
+  .plan-card .plan-price span { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .plan-card .plan-save {
+    position: absolute; top: -10px; right: 10px;
+    background: var(--pro); color: #000; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace;
+  }
+
+  .features-list {
+    text-align: left; margin-bottom: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .feature {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text);
+  }
+  .feature-icon { color: var(--accent); font-size: 14px; flex-shrink: 0; }
+
+  .pay-btn {
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--pro), #d97706);
+    border: none; color: #000; font-size: 15px; font-weight: 700;
+    font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s;
+    margin-bottom: 10px;
+  }
+  .pay-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .pay-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .modal-footer { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: transparent; border: none; color: var(--muted);
+    font-size: 20px; cursor: pointer; padding: 4px; transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <span class="logo-name">Tributo<span>Zero</span></span>
+  </div>
+  <div class="header-right">
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('pt')" id="btn-pt">🇧🇷 PT</button>
+      <button class="lang-btn" onclick="setLang('en')" id="btn-en">🇺🇸 EN</button>
+    </div>
+    <div class="plan-badge free" id="plan-badge">FREE</div>
+  </div>
+</header>
+
+<div id="usage-bar">
+  <span class="usage-label" id="usage-label">Mensagens este mês</span>
+  <div class="usage-track">
+    <div class="usage-fill" id="usage-fill" style="width:0%"></div>
+  </div>
+  <span class="usage-count ok" id="usage-count">10/10</span>
+  <button class="upgrade-btn-small" id="upgrade-btn-small" onclick="openPaywall()">⚡ Upgrade Pro</button>
+</div>
+
+<div id="topics"></div>
+
+<div id="chat">
+  <div id="welcome"></div>
+</div>
+
+<div id="input-area">
+  <div class="disclaimer" id="disclaimer"></div>
+  <div class="input-wrapper">
+    <textarea id="user-input" rows="1"></textarea>
+    <button id="send-btn" onclick="sendMessage()">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+    </button>
+  </div>
+  <div class="input-hint" id="input-hint"></div>
+</div>
+
+<!-- PAYWALL MODAL -->
+<div class="modal-overlay" id="paywall-modal" style="display:none">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closePaywall()">✕</button>
+    <div class="modal-icon">🔓</div>
+    <h2 class="modal-title" id="modal-title">Você atingiu o<br/><em>limite gratuito</em></h2>
+    <p class="modal-sub" id="modal-sub">Assine o TaxWise Pro e tenha acesso ilimitado a todas as funcionalidades.</p>
+
+    <div class="plans">
+      <button class="plan-card selected" id="plan-monthly" onclick="selectPlan('pro_monthly')">
+        <div class="plan-name" id="lbl-monthly">Mensal</div>
+        <div class="plan-price">R$19<span>,90/mês</span></div>
+      </button>
+      <button class="plan-card" id="plan-yearly" onclick="selectPlan('pro_yearly')" style="position:relative">
+        <div class="plan-save" id="lbl-save">2 MESES GRÁTIS</div>
+        <div class="plan-name" id="lbl-yearly">Anual</div>
+        <div class="plan-price">R$149<span>/ano</span></div>
+      </button>
+    </div>
+
+    <div class="features-list">
+      <div class="feature"><span class="feature-icon">✓</span><span id="f1">Mensagens ilimitadas por mês</span></div>
+      <div class="feature"><span class="feature-icon">✓</span><span id="f2">Todos os tópicos: IR, Cripto, FIIs, Autônomos</span></div>
+      <div class="feature"><span class="feature-icon">✓</span><span id="f3">Respostas em PT e EN</span></div>
+      <div class="feature"><span class="feature-icon">✓</span><span id="f4">Base de conhecimento sempre atualizada</span></div>
+      <div class="feature"><span class="feature-icon">✓</span><span id="f5">PIX, cartão de crédito ou débito</span></div>
+    </div>
+
+    <button class="pay-btn" id="pay-btn" onclick="startCheckout()">
+      <span id="pay-btn-text">💳 Assinar com Mercado Pago</span>
+    </button>
+
+    <div class="modal-footer" id="modal-footer">Cancele quando quiser · Renovação automática</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const FREE_LIMIT = 5;
+
+// Gera userId único por dispositivo (persistido no localStorage)
+function getUserId() {
+  let id = localStorage.getItem('tz_user_id');
+  if (!id) {
+    id = 'user_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('tz_user_id', id);
+  }
+  return id;
+}
+
+const USER_ID = getUserId();
+
+// ============================================================
+// I18N
+// ============================================================
+const I18N = {
+  pt: {
+    lang: 'pt-BR',
+    usageLabel: 'Mensagens este mês',
+    upgradeSmall: '⚡ Upgrade Pro',
+    topics: [
+      { id: 'geral', label: '🧭 Geral' },
+      { id: 'irpf', label: '📋 IR' },
+      { id: 'investimentos', label: '📈 Investimentos' },
+      { id: 'autonomo', label: '💼 Autônomos' },
+      { id: 'cripto', label: '₿ Cripto' },
+      { id: 'previdencia', label: '🏦 Previdência' },
+    ],
+    welcomeTitle: 'Planejamento tributário<br/><em>com base em lei</em>',
+    welcomeSub: 'Respostas fundamentadas na legislação tributária brasileira. 5 mensagens gratuitas por mês.',
+    quickQuestions: [
+      '💰 Como funciona a isenção de R$20k em ações?',
+      '📋 Simplificado ou completo no IR?',
+      '₿ Como declarar Bitcoin no IR?',
+      '💼 Carnê-leão ou MEI: o que compensa?',
+      '🏦 PGBL deduz até quanto no IR?',
+      '📉 O que é tax loss harvesting?',
+    ],
+    disclaimer: '⚠️ Informações educativas sobre tributação legal. Não substitui consultoria contábil ou jurídica.',
+    placeholder: 'Pergunte sobre planejamento tributário...',
+    inputHint: 'Enter para enviar · Shift+Enter para nova linha',
+    sourcesLabel: '📚 Fontes:',
+    planFree: 'FREE',
+    planPro: '⚡ PRO',
+    modalTitle: 'Você atingiu o<br/><em>limite gratuito</em>',
+    modalSub: 'Assine o TaxWise Pro e tenha mensagens ilimitadas com respostas fundamentadas em lei.',
+    lblMonthly: 'Mensal', lblYearly: 'Anual', lblSave: '2 MESES GRÁTIS',
+    features: [
+      'Mensagens ilimitadas por mês',
+      'Todos os tópicos: IR, Cripto, FIIs, Autônomos',
+      'Respostas em PT e EN',
+      'Base de conhecimento sempre atualizada',
+      'PIX, cartão de crédito ou débito',
+    ],
+    payBtn: '💳 Assinar com Mercado Pago',
+    paying: '⟳ Redirecionando...',
+    modalFooter: 'Cancele quando quiser · Renovação automática',
+    msgLimitWarning: (n) => `⚠️ Você tem apenas **${n} mensagem${n>1?'s':''}** restante${n>1?'s':''}. Considere fazer upgrade.`,
+    msgLimitReached: '🔒 Limite de mensagens atingido. Faça upgrade para continuar.',
+    systemLang: 'Responda sempre em português do Brasil.',
+  },
+  en: {
+    lang: 'en-US',
+    usageLabel: 'Messages this month',
+    upgradeSmall: '⚡ Upgrade Pro',
+      topics: [
+        { id: 'geral', label: '🧭 General' },
+        { id: 'irpf', label: '📋 Income Tax' },
+        { id: 'investimentos', label: '📈 Investments' },
+        { id: 'autonomo', label: '💼 Freelancers' },
+        { id: 'cripto', label: '₿ Crypto' },
+        { id: 'previdencia', label: '🏦 Retirement' },
+      ],
+      welcomeTitle: 'Tax planning<br/><em>based on law</em>',
+      welcomeSub: 'Answers based on Brazilian tax legislation. 5 free messages per month.',
+      quickQuestions: [
+        '💰 How does the R$20k stock exemption work?',
+        '📋 Simplified or full return?',
+        '₿ How to declare Bitcoin on taxes?',
+        '💼 Freelance or MEI: what pays off?',
+        '🏦 PGBL deducts up to how much?',
+        '📉 What is tax loss harvesting?',
+      ],
+      disclaimer: '⚠️ Educational information on legal taxation. Does not replace accounting or legal advice.',
+      placeholder: 'Ask about tax planning...',
+      inputHint: 'Enter to send · Shift+Enter for new line',
+      sourcesLabel: '📚 Sources:',
+      planFree: 'FREE',
+      planPro: '⚡ PRO',
+      modalTitle: 'You reached the<br/><em>free limit</em>',
+      modalSub: 'Subscribe to TaxWise Pro and get unlimited messages with law-based answers.',
+      lblMonthly: 'Monthly', lblYearly: 'Yearly', lblSave: 'SAVE 2 MONTHS',
+      features: [
+        'Unlimited messages per month',
+        'All topics: Income Tax, Crypto, Stocks, Freelancers',
+        'Answers in PT and EN',
+        'Knowledge base always updated',
+        'PIX, credit or debit card',
+      ],
+      payBtn: '💳 Subscribe with Mercado Pago',
+      paying: '⟳ Redirecting...',
+      modalFooter: 'Cancel anytime · Auto-renewal',
+      msgLimitWarning: (n) => `⚠️ You have only **${n} message${n>1?'s':''}** remaining. Consider upgrading.`,
+      msgLimitReached: '🔒 Message limit reached. Upgrade to continue.',
+        systemLang: 'Always respond in English.',
+      }
+    };
+    // ── STATE ──────────────────────────────────────────────────
+let lang = 'pt';
+let activeTopic = 'geral';
+let messages = [];
+let selectedPlan = 'pro_monthly';
+let usage = { plan: 'free', messages_used: 0, messages_remaining: 5 };
+const BACKEND_URL = 'http://localhost:3001';
+
+async function fetchUsage() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/usage`, { headers: { 'x-user-id': USER_ID } });
+    if (res.ok) { usage = await res.json(); updateUsageUI(); }
+  } catch {}
+}
+
+function updateUsageUI() {
+  const t = I18N[lang];
+  const isPro = usage.plan === 'pro';
+  const remaining = isPro ? null : (usage.messages_remaining ?? FREE_LIMIT);
+  const pct = isPro ? 0 : Math.min(100, ((usage.messages_used || 0) / FREE_LIMIT) * 100);
+  const fill = document.getElementById('usage-fill');
+  if (fill) { fill.style.width = pct + '%'; fill.className = 'usage-fill' + (pct >= 80 ? ' danger' : ''); }
+  const count = document.getElementById('usage-count');
+  if (count) {
+    count.textContent = isPro ? '∞' : `${remaining}/${FREE_LIMIT}`;
+    count.className = 'usage-count' + (isPro ? ' pro' : remaining <= 2 ? ' danger' : remaining <= 4 ? ' warn' : ' ok');
+  }
+  const badge = document.getElementById('plan-badge');
+  if (badge) { badge.textContent = isPro ? '⚡ PRO' : 'FREE'; badge.className = 'plan-badge ' + (isPro ? 'pro' : 'free'); }
+  const upgradeBtn = document.getElementById('upgrade-btn-small');
+  if (upgradeBtn) upgradeBtn.className = 'upgrade-btn-small' + (isPro ? ' hidden' : '');
+  const label = document.getElementById('usage-label');
+  if (label) label.textContent = t.usageLabel;
+}
+
+function openPaywall() {
+  const t = I18N[lang];
+  document.getElementById('modal-title').innerHTML = t.modalTitle;
+  document.getElementById('modal-sub').textContent = t.modalSub;
+  document.getElementById('pay-btn-text').textContent = t.payBtn;
+  document.getElementById('paywall-modal').style.display = 'flex';
+}
+function closePaywall() { document.getElementById('paywall-modal').style.display = 'none'; }
+function selectPlan(plan) {
+  selectedPlan = plan;
+  document.getElementById('plan-monthly').classList.toggle('selected', plan === 'pro_monthly');
+  document.getElementById('plan-yearly').classList.toggle('selected', plan === 'pro_yearly');
+}
+async function startCheckout() {
+  const btn = document.getElementById('pay-btn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': USER_ID },
+      body: JSON.stringify({ plan: selectedPlan })
+    });
+    const data = await res.json();
+    window.open(data.sandbox_url || data.checkout_url, '_blank');
+  } catch(e) { alert('Erro: ' + e.message); }
+  btn.disabled = false;
+}
+
+function setLang(newLang) {
+  lang = newLang;
+  document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  const t = I18N[lang];
+  const disc = document.getElementById('disclaimer');
+  if (disc) disc.textContent = t.disclaimer;
+  const input = document.getElementById('user-input');
+  if (input) input.placeholder = t.placeholder;
+  const hint = document.getElementById('input-hint');
+  if (hint) hint.textContent = t.inputHint;
+  renderTopics(); updateUsageUI();
+  if (document.getElementById('welcome')) renderWelcome();
+}
+
+function renderTopics() {
+  const t = I18N[lang];
+  const container = document.getElementById('topics');
+  if (!container) return;
+  container.innerHTML = '';
+  t.topics.forEach(topic => {
+    const btn = document.createElement('button');
+    btn.className = 'topic-btn' + (topic.id === activeTopic ? ' active' : '');
+    btn.textContent = topic.label;
+    btn.addEventListener('click', () => {
+      activeTopic = topic.id;
+      document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    container.appendChild(btn);
+  });
+}
+
+function renderWelcome() {
+  const t = I18N[lang];
+  const el = document.getElementById('welcome');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="font-size:42px">🇧🇷</div>
+    <h1 class="welcome-title">${t.welcomeTitle}</h1>
+    <p class="welcome-sub">${t.welcomeSub}</p>
+    <div class="quick-questions">
+      ${t.quickQuestions.map(q => `<button class="quick-q" onclick="sendQuick(this)">${q}</button>`).join('')}
+    </div>`;
+}
+
+function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs,'<ul>$1</ul>')
+    .replace(/\n{2,}/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+}
+
+function addUserBubble(content) {
+  document.getElementById('welcome')?.remove();
+  const chat = document.getElementById('chat');
+  const t = I18N[lang];
+  const msg = document.createElement('div');
+  msg.className = 'msg user';
+  msg.innerHTML = `<div class="msg-avatar">👤</div><div class="msg-content"><div class="msg-bubble">${escapeHtml(content)}</div><div class="msg-meta">${new Date().toLocaleTimeString(t.lang,{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function createAiBubble() {
+  document.getElementById('welcome')?.remove();
+  const chat = document.getElementById('chat');
+  const msg = document.createElement('div'); msg.className = 'msg ai';
+  const av = document.createElement('div'); av.className = 'msg-avatar'; av.textContent = '⚡';
+  const cnt = document.createElement('div'); cnt.className = 'msg-content';
+  const bubble = document.createElement('div'); bubble.className = 'msg-bubble';
+  cnt.appendChild(bubble); msg.appendChild(av); msg.appendChild(cnt); chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+  return { bubble, cnt };
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div'); el.className = 'msg ai'; el.id = 'typing';
+  el.innerHTML = `<div class="msg-avatar">⚡</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
+  chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
+}
+function removeTyping() { document.getElementById('typing')?.remove(); }
+
+function sendQuick(btn) {
+  document.getElementById('user-input').value = btn.textContent.replace(/^[^\s]+\s/,'');
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input').value.trim();
+  if (!input) return;
+  const t = I18N[lang];
+  if (usage.plan === 'free' && (usage.messages_remaining ?? FREE_LIMIT) <= 0) { openPaywall(); return; }
+  document.getElementById('user-input').value = '';
+  document.getElementById('user-input').style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+  addUserBubble(input);
+  messages.push({ role: 'user', content: input });
+  showTyping();
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': USER_ID },
+      body: JSON.stringify({ message: input, history: messages.slice(-10,-1), category: activeTopic, lang })
+    });
+    removeTyping();
+    if (res.status === 402) { usage.messages_remaining = 0; updateUsageUI(); openPaywall(); document.getElementById('send-btn').disabled = false; return; }
+    if (!res.ok) { document.getElementById('send-btn').disabled = false; return; }
+    if (usage.plan === 'free') {
+      usage.messages_used = (usage.messages_used || 0) + 1;
+      usage.messages_remaining = Math.max(0, (usage.messages_remaining ?? FREE_LIMIT) - 1);
+      updateUsageUI();
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '', fullResponse = '';
+    let bubble = null, cnt = null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n'); buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (data.type === 'text') {
+            if (!bubble) { const c = createAiBubble(); bubble = c.bubble; cnt = c.cnt; }
+            fullResponse += data.text;
+            bubble.innerHTML = `<p>${formatMarkdown(fullResponse)}</p>`;
+            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+          } else if (data.type === 'done' && cnt) {
+            const meta = document.createElement('div'); meta.className = 'msg-meta';
+            meta.textContent = new Date().toLocaleTimeString(t.lang,{hour:'2-digit',minute:'2-digit'});
+            cnt.appendChild(meta);
+            messages.push({ role: 'assistant', content: fullResponse });
+          }
+        } catch {}
+      }
+    }
+  } catch(e) { removeTyping(); }
+  document.getElementById('send-btn').disabled = false;
+}
+
+document.getElementById('user-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 130) + 'px';
+});
+document.getElementById('user-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById('paywall-modal').addEventListener('click', function(e) {
+  if (e.target === this) closePaywall();
+});
+
+setLang('pt');
+fetchUsage();
+</script>
+</body>
+</html>
