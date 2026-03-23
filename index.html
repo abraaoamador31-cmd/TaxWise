@@ -527,18 +527,10 @@ function selectPlan(plan) {
   document.getElementById('plan-yearly').classList.toggle('selected', plan === 'pro_yearly');
 }
 async function startCheckout() {
-  const btn = document.getElementById('pay-btn');
-  btn.disabled = true;
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/checkout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': USER_ID },
-      body: JSON.stringify({ plan: selectedPlan })
-    });
-    const data = await res.json();
-    window.open(data.sandbox_url || data.checkout_url, '_blank');
-  } catch(e) { alert('Erro: ' + e.message); }
-  btn.disabled = false;
+  const HOTMART_MONTHLY = 'https://pay.hotmart.com/B105031936A?offerId=mensal';
+  const HOTMART_YEARLY = 'https://pay.hotmart.com/B105031936A?offerId=anual';
+  const url = selectedPlan === 'pro_yearly' ? HOTMART_YEARLY : HOTMART_MONTHLY;
+  window.open(url, '_blank');
 }
 
 function setLang(newLang) {
