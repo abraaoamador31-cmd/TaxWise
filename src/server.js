@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import Groq from 'groq-sdk';
-import { billingRouter, getOrCreateUser, canSendMessage, users } from './billing.js';
+import { billingRouter, getOrCreateUser, canSendMessage, pool } from './billing.js';
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.static('./'));
 app.use('/api', billingRouter);
 
-const groq = new Groq({ apiKey: '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' });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
 
@@ -54,10 +54,11 @@ app.post('/api/chat', async (req, res) => {
       });
     }
     if (user.plan === 'free') {
-      user.messages_used += 1;
-      users.set(userId, user);
-    }
-  }
+  await pool.query(
+    'UPDATE users SET messages_used = messages_used + 1 WHERE id = $1',
+    [userId]
+  );
+}
 
   const langInstruction = lang === 'en'
     ? 'Respond in English. Include Portuguese tax terms in parentheses.'
@@ -94,6 +95,7 @@ app.post('/api/chat', async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ error: err.message });
     }
+  }
   }
 });
 
