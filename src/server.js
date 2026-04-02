@@ -44,7 +44,7 @@ app.post('/api/chat', async (req, res) => {
   if (!message) return res.status(400).json({ error: 'message obrigatório' });
 
   if (userId) {
-    const user = getOrCreateUser(userId);
+    const user = await getOrCreateUser(userId);
     if (!canSendMessage(user)) {
       return res.status(402).json({
         error: 'limit_reached',
