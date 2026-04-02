@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import Groq from 'groq-sdk';
-import { billingRouter, getOrCreateUser, canSendMessage, pool } from './billing.js';
+import { billingRouter, getOrCreateUser, canSendMessage } from './billing.js';
 
 dotenv.config();
 
