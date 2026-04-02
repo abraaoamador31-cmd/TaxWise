@@ -1,8 +1,6 @@
 // src/server.js
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-dotenv.config();
 import Groq from 'groq-sdk';
 import { billingRouter, getOrCreateUser, canSendMessage } from './billing.js';
 import pg from 'pg';
