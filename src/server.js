@@ -3,13 +3,6 @@ import express from 'express';
 import cors from 'cors';
 import Groq from 'groq-sdk';
 import { billingRouter, getOrCreateUser, canSendMessage } from './billing.js';
-import pg from 'pg';
-const { Pool } = pg;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
-});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
