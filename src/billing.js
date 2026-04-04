@@ -159,4 +159,4 @@ router.get('/admin/users', async (req, res) => {
 });
 
 export { router as billingRouter, getOrCreateUser, canSendMessage, pool };
-export { pool };
+export { pool }; 
