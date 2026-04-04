@@ -2,7 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import Groq from 'groq-sdk';
-import { billingRouter, getOrCreateUser, canSendMessage } from './billing.js';
+import { billingRouter, getOrCreateUser, canSendMessage, pool } from './billing.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
