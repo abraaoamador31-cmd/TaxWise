@@ -10,6 +10,7 @@ const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
 // Conexão com PostgreSQL
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
