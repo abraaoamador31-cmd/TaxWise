@@ -31,7 +31,7 @@ async function initDB() {
     `);
     console.log('✅ Banco de dados conectado!');
   } catch (err) {
-    console.error('Erro ao conectar banco:', err.message);
+    console.error('Erro ao conectar banco:', err);
   }
 }
 initDB();
