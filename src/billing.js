@@ -1,7 +1,6 @@
 // src/billing.js
 import express from 'express';
 import pg from 'pg';
-import { billingRouter, getOrCreateUser, canSendMessage, pool } from './billing.js';
 
 const router = express.Router();
 const { Pool } = pg;
