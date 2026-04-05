@@ -13,7 +13,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.static('./'));
 app.use('/api', billingRouter);
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: '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' });
 
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
 
