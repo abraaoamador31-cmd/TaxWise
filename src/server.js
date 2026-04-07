@@ -13,6 +13,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.static('./'));
 app.use('/api', billingRouter);
 
+console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY);
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
