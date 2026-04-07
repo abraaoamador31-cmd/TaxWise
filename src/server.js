@@ -14,8 +14,7 @@ app.use(express.static('./'));
 app.use('/api', billingRouter);
 
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY);
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
+const genAI = new GoogleGenerativeAI('AIzaSyBIUel0WdXW9iX4XDfbs_unJsp90PBqecw');
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
 
 Você atende: médicos, advogados, psicólogos, dentistas, arquitetos, engenheiros, consultores, desenvolvedores, designers, fotógrafos, redatores e qualquer profissional autônomo.
