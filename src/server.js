@@ -1,7 +1,7 @@
 // src/server.js
 import express from 'express';
 import cors from 'cors';
-import Groq from 'groq-sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { billingRouter, getOrCreateUser, canSendMessage, pool } from './billing.js';
 
 const app = express();
@@ -13,7 +13,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.static('./'));
 app.use('/api', billingRouter);
 
-const groq = new Groq({ apiKey: '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' });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
 
@@ -66,29 +66,16 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const stream = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: `${SYSTEM_PROMPT}\n\n${langInstruction}` },
-        ...history.slice(-10),
-        { role: 'user', content: message }
-      ],
-      stream: true,
-      max_tokens: 1024,
-    });
-
-    for await (const chunk of stream) {
-      const text = chunk.choices[0]?.delta?.content || '';
-      if (text) {
-        res.write(`data: ${JSON.stringify({ type: 'text', text })}\n\n`);
-      }
-    }
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const result = await model.generateContent(`${SYSTEM_PROMPT}\n\n${langInstruction}\n\n${message}`);
+const text = result.response.text();
+res.write(`data: ${JSON.stringify({ type: 'text', text })}\n\n`);
 
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     res.end();
 
   } catch (err) {
-    console.error('Erro Groq:', err.message);
+    console.error('Erro Gemini:', err.message);
     if (!res.headersSent) {
       res.status(500).json({ error: err.message });
     }
