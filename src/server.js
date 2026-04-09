@@ -14,7 +14,7 @@ app.use(express.static('./'));
 app.use('/api', billingRouter);
 
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY);
-const genAI = new GoogleGenerativeAI('AIzaSyBIUel0WdXW9iX4XDfbs_unJsp90PBqecw');
+const genAI = new GoogleGenerativeAI('AIzaSyBIUel0WdXW9iX4XDfbs_unJsp90PBqecw', { apiVersion: 'v1' });
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
 
 Você atende: médicos, advogados, psicólogos, dentistas, arquitetos, engenheiros, consultores, desenvolvedores, designers, fotógrafos, redatores e qualquer profissional autônomo.
@@ -66,7 +66,7 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.0-pro' });
 const result = await model.generateContent(`${SYSTEM_PROMPT}\n\n${langInstruction}\n\n${message}`);
 const text = result.response.text();
 res.write(`data: ${JSON.stringify({ type: 'text', text })}\n\n`);
