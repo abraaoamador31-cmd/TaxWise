@@ -66,7 +66,7 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 const result = await model.generateContent(`${SYSTEM_PROMPT}\n\n${langInstruction}\n\n${message}`);
 const text = result.response.text();
 res.write(`data: ${JSON.stringify({ type: 'text', text })}\n\n`);
