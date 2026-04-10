@@ -65,7 +65,7 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     const GEMINI_KEY = 'AIzaSyBIUel0WdXW9iX4XDfbs_unJsp90PBqecw';
-const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_KEY}`, {
+const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
