@@ -12,7 +12,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.static('./'));
 app.use('/api', billingRouter);
 
-console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'OK' : 'undefined');
+console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'OK' : 'undefined');
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'OK' : 'undefined');
 
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
@@ -67,17 +67,18 @@ app.post('/api/chat', async (req, res) => {
     ? 'Respond in English. Include Portuguese tax terms in parentheses.'
     : 'Responda em português do Brasil.';
 
-  // Limita histórico para as últimas 10 mensagens
   const MAX_HISTORY = 10;
   const recentHistory = history.slice(-MAX_HISTORY);
 
-  const messages = [
-    { role: 'system', content: `${SYSTEM_PROMPT}\n\n${langInstruction}` },
+  const contents = [
     ...recentHistory.map(m => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: m.content
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }]
     })),
-    { role: 'user', content: message }
+    {
+      role: 'user',
+      parts: [{ text: `${SYSTEM_PROMPT}\n\n${langInstruction}\n\n${message}` }]
+    }
   ];
 
   try {
@@ -85,33 +86,30 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // barato e eficiente
-        messages,
-        max_tokens: 1000
-      })
-    });
+    const GEMINI_KEY = process.env.GEMINI_API_KEY;
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents })
+      }
+    );
 
     const data = await response.json();
-    console.log('OpenAI response:', JSON.stringify(data));
+    console.log('Gemini response:', JSON.stringify(data));
 
-    if (!data.choices || !data.choices[0]) {
-      throw new Error(data?.error?.message || 'Resposta inválida da API OpenAI');
+    if (!data.candidates || !data.candidates[0]) {
+      throw new Error(data?.error?.message || 'Resposta inválida da API Gemini');
     }
 
-    const text = data.choices[0].message.content;
+    const text = data.candidates[0].content.parts[0].text;
     res.write(`data: ${JSON.stringify({ type: 'text', text })}\n\n`);
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     res.end();
 
   } catch (err) {
-    console.error('Erro OpenAI:', err.message);
+    console.error('Erro Gemini:', err.message);
     if (!res.headersSent) {
       res.status(500).json({ error: err.message });
     }
@@ -124,4 +122,4 @@ app.get('/api/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`✅ TaxWise rodando em http://localhost:${PORT}`);
-}); 
+});
