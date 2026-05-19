@@ -12,8 +12,8 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 // Conexão com PostgreSQL
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
 const pool = new Pool({
-  connectionString: 'postgresql://postgres:vRwSOcQmHClpeORFGQTsJxGKkocUiLOb@shuttle.proxy.rlwy.net:23092/railway',
-  ssl: { rejectUnauthorized: false }
+  connectionString: process.env.DATABASE_URL,
+  ssl: true
 });
 
 // Criar tabela se não existir
