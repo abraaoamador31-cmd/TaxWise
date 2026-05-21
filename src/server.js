@@ -12,7 +12,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.static('./'));
 app.use('/api', billingRouter);
 
-console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? 'OK' : 'undefined');
+console.log('MISTRAL_API_KEY:', process.env.MISTRAL_API_KEY ? 'OK' : 'undefined');
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'OK' : 'undefined');
 
 const SYSTEM_PROMPT = `Você é o TaxWise, assistente especializado em planejamento tributário legal para profissionais autônomos brasileiros.
@@ -84,24 +84,24 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'mistral-small-latest',
         messages,
         max_tokens: 1000
       })
     });
 
     const data = await response.json();
-    console.log('Groq response:', JSON.stringify(data));
+    console.log('Mistral response:', JSON.stringify(data));
 
     if (!data.choices || !data.choices[0]) {
-      throw new Error(data?.error?.message || 'Resposta inválida da API Groq');
+      throw new Error(data?.error?.message || 'Resposta inválida da API Mistral');
     }
 
     const text = data.choices[0].message.content;
@@ -110,7 +110,7 @@ app.post('/api/chat', async (req, res) => {
     res.end();
 
   } catch (err) {
-    console.error('Erro Groq:', err.message);
+    console.error('Erro Mistral:', err.message);
     if (!res.headersSent) {
       res.status(500).json({ error: err.message });
     }
